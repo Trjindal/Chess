@@ -25,6 +25,7 @@ export class Game{
     }
 
     public makeMove(socket: WebSocket, move:{to:string,from:string}){
+        console.log(this.board.turn()+" "+move);
         if(this.board.turn() === 'w' && this.player1!==socket){
             this.player2.send(JSON.stringify({
                 type:NOT_YOUR_MOVE

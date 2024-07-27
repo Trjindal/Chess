@@ -14,33 +14,33 @@ export const  Game = ()=>{
     const socket = useSocket();
     const [chess,setChess] = useState(new Chess());
     const [board,setBoard] =useState(chess.board());
+    const [started, setStarted] = useState(false)
+
     
     useEffect(()=>{
         if(!socket){
             return;
         }
         socket.onmessage = (event) => {
-            const message = event.data;
-            if(message === INIT_GAME){
-                // setChess(new Chess());
-                setBoard(chess.board);
-                console.log("GAME INITIATED");
-                return;
+            const message = JSON.parse(event.data);
+            switch (message.type) {
+                case INIT_GAME:
+                    setBoard(chess.board());
+                    setStarted(true)
+                    break;
+                case MOVE:
+                    const move = message.payload;
+                    chess.move(move);
+                    setBoard(chess.board());
+                    console.log("Move made");
+                    break;
+                case GAME_OVER:
+                    console.log("Game over");
+                    break;
             }
-            if(message === MOVE){
-                const move = message.payload;
-                chess.move(move);
-                setBoard(chess.board());
-                console.log("Move");
-                return ;
-            }
-            if(message === GAME_OVER){
-                console.log("game over");
-                return;
-            }
-        }
+        };
     },[socket])
-
+    // console.log(socket)
     if(!socket) return <div>Connecting ...</div>
 
     return (
@@ -48,16 +48,18 @@ export const  Game = ()=>{
             <div className="pt-8 max-w-screen-lg w-full">
                 <div className="grid grid-cols-6 gap-4 w-full">
                     <div className="col-span-4 flex justify-center w-full">
-                        <ChessBoard board={board}/>
+                        <ChessBoard chess={chess} setBoard={setBoard} socket={socket} board={board} />
                     </div>
                     <div className="col-span-2 bg-green-200 w-full">
-                        <Button onClick={()=>{
-                                socket.send(JSON.stringify({
+                    {!started && <Button onClick={() => {
+                            console.log("on click");
+                            console.log(socket);
+                            socket.send(JSON.stringify({
                                 type: INIT_GAME
-                                }))
-                            }}>
-                            Play online
-                        </Button>
+                            }))
+                        }} >
+                            Play
+                        </Button>}
                     </div>
                 </div>
             </div>
