@@ -1,0 +1,10 @@
+{
+  "name": "@chess/tailwind-config",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "files": [
+    "postcss.config.js",
+    "tailwind.config.js"
+  ]
+}
