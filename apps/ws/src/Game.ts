@@ -1,6 +1,6 @@
-import { Chess } from 'chess.js'
+import { Chess, Square } from 'chess.js'
 import { WebSocket } from 'ws';
-import { GAME_OVER, INIT_GAME, MOVE, NOT_YOUR_MOVE } from './messages';
+import { GAME_OVER, INIT_GAME, MOVE, NOT_YOUR_MOVE, SUGGEST } from './messages';
 export class Game{
     public player1:WebSocket
     public player2:WebSocket
@@ -71,6 +71,39 @@ export class Game{
             this.player1.send(JSON.stringify({
                 type:MOVE,
                 payload:move
+            }))
+        }
+        
+
+        
+    }
+
+    public suggestMove(socket: WebSocket, square:Square){
+        if(this.board.turn() === 'w' && this.player1!==socket){
+            return;
+        }
+        if(this.board.turn() === 'b' && this.player2!==socket){
+            return;
+        }
+
+        let suggestions:string[] = [];
+        try{
+           suggestions = this.board.moves({square:square})
+        }catch(error){
+            socket.send(JSON.stringify((error as Error).message));
+            return;
+        }
+    // since the previous move is done now the existing user should know what was done
+        console.log(suggestions);
+        if(this.board.turn() === 'b' ){
+            this.player2.send(JSON.stringify({
+                type:SUGGEST,
+                payload:suggestions
+            }))
+        }else{
+            this.player1.send(JSON.stringify({
+                type:SUGGEST,
+                payload:suggestions
             }))
         }
         
