@@ -2,19 +2,22 @@ import { useEffect, useState } from "react";
 import { Button } from "../components/Button"
 import { ChessBoard } from "../components/ChessBoard"
 import { useSocket } from "../hooks/useSocket"
-import { Chess } from "chess.js";
+import { Chess, Square } from "chess.js";
 
 export const INIT_GAME="init_game";
 export const MOVE="move";
 export const NOT_YOUR_MOVE="this is not your turn";
 export const GAME_OVER="game over";
+export const SUGGEST = "suggest";
 
 export const  Game = ()=>{
 
     const socket = useSocket();
-    const [chess,setChess] = useState(new Chess());
+    // eslint-disable-next-line
+    const [chess,_setChess] = useState(new Chess());
     const [board,setBoard] =useState(chess.board());
-    const [started, setStarted] = useState(false)
+    const [started, setStarted] = useState(false);
+    const [suggestion,setSuggestion] = useState<Square[]|null>(null);
 
     
     useEffect(()=>{
@@ -24,19 +27,27 @@ export const  Game = ()=>{
         socket.onmessage = (event) => {
             const message = JSON.parse(event.data);
             switch (message.type) {
-                case INIT_GAME:
+                case INIT_GAME:{
                     setBoard(chess.board());
                     setStarted(true)
                     break;
-                case MOVE:
+                }
+                case MOVE:{
                     const move = message.payload;
                     chess.move(move);
                     setBoard(chess.board());
                     console.log("Move made");
-                    break;
-                case GAME_OVER:
+                    break;}
+                case GAME_OVER:{
                     console.log("Game over");
+                    break;}
+                case SUGGEST:{
+                    // const 
+                    const suggestions = message.payload;
+                    const lastTwoWordsArray = suggestions.map((suggestion: string) => suggestion.slice(-2));
+                    setSuggestion(lastTwoWordsArray);
                     break;
+                }
             }
         };
     },[socket])
@@ -48,12 +59,11 @@ export const  Game = ()=>{
             <div className="pt-8 max-w-screen-lg w-full">
                 <div className="grid grid-cols-6 gap-4 w-full">
                     <div className="col-span-4 flex justify-center w-full">
-                        <ChessBoard chess={chess} setBoard={setBoard} socket={socket} board={board} />
+                        <ChessBoard chess={chess} setBoard={setBoard} socket={socket} board={board} suggestion={suggestion} setSuggestion={setSuggestion}/>
                     </div>
                     <div className="col-span-2 bg-green-200 w-full">
                     {!started && <Button onClick={() => {
                             console.log("on click");
-                            console.log(socket);
                             socket.send(JSON.stringify({
                                 type: INIT_GAME
                             }))
